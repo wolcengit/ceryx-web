@@ -6,20 +6,45 @@ from flask import json
 from flask import render_template
 from flask import request
 from flask.views import MethodView
+from flask import session, redirect, url_for, escape
 
 
 CERYX_API_HOST = os.getenv('CERYX_API_HOST')
+CERYX_WEB_PASS = os.getenv('CERYX_WEB_PASS')
 
 app = Flask(__name__)
-
+app.secret_key = 'Qdfwoiwojwngoiwuz789h309828j'
 
 @app.route('/')
 def home():
     """
     Return the home page (dashboard) of Ceryx Web.
     """
-    return render_template('index.html')
+    if 'username' in session:
+        username = session['username']
+        if username == CERYX_WEB_PASS:
+            return render_template('index.html')
+    return redirect(url_for('login'))
 
+@app.route('/login', methods = ['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        session['username'] = request.form['username']
+        return redirect(url_for('home'))
+
+    return '''
+   <h1>input the security code :</h1>
+   <form action = "" method = "post">
+      <p><input type ="password" name ="username"/></p>
+      <p><input type ="submit" value ="Login"/></p>
+   </form>
+   '''
+
+@app.route('/logout')
+def logout():
+   # remove the username from the session if it is there
+   session.pop('username', None)
+   return redirect(url_for('login'))
 
 class RoutesListAPI(MethodView):
     endpoint = f'{CERYX_API_HOST}/api/routes'
